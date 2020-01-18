@@ -10,6 +10,7 @@ namespace serverChat
     {
         private const int _maxMessage = 100;
         public static List<message> Chat = new List<message>();
+        static object locker = new object();
         public struct message
         {
             public string userName;
@@ -24,11 +25,14 @@ namespace serverChat
         {
             try
             {
-                if (string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(msg)) return;
-                int countMessages = Chat.Count;
-                if (countMessages > _maxMessage) ClearChat();
-                message newMessage = new message(userName, msg);
-                Chat.Add(newMessage);
+                lock (locker)
+                {
+                    if (string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(msg)) return;
+                    int countMessages = Chat.Count;
+                    if (countMessages > _maxMessage) ClearChat();
+                    message newMessage = new message(userName, msg);
+                    Chat.Add(newMessage);
+                }
                 Console.WriteLine("New message from {0}.",userName);
                 Server.UpdateAllChats();
             }
@@ -42,14 +46,17 @@ namespace serverChat
         {
             try
             {
-                string data = "#updatechat&";
-                int countMessages = Chat.Count;
-                if (countMessages <= 0) return string.Empty;
-                for (int i = 0; i < countMessages; i++)
-                {
-                    data += String.Format("{0}~{1}|", Chat[i].userName, Chat[i].data);
+                lock(locker)
+                { 
+                    string data = "#updatechat&";
+                    int countMessages = Chat.Count;
+                    if (countMessages <= 0) return string.Empty;
+                    for (int i = 0; i < countMessages; i++)
+                    {
+                        data += String.Format("{0}~{1}|", Chat[i].userName, Chat[i].data);
+                    }
+                    return data;
                 }
-                return data;
             }
             catch (Exception exp) { Console.WriteLine("Error with getChat: {0}", exp.Message); return string.Empty; }
         }
