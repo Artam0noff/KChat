@@ -52,18 +52,22 @@ namespace serverChat
         }
         private void handleCommand(string data)
         {
-            if (data.Contains("#setname"))
-            {
-                _userName = data.Split('&')[1];
-                UpdateChat();
-                return;
-            }
             if (data.Contains("#newmsg"))
             {
                 string message = data.Split('&')[1];
-                ChatController.AddMessage(_userName,message);
+                ChatController.AddMessage(_userName, message);
                 return;
             }
+            if (data.Contains("#setname"))
+            {
+                if (!data.Contains("#newmsg"))
+                {
+                    _userName = data.Split('&')[1];
+                    UpdateChat();
+                    return;
+                }
+            }
+
         }
         public void UpdateChat()
         {
